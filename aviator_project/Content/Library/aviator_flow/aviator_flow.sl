@@ -1,8 +1,6 @@
 namespace: aviator_flow
 
-imports:
-  ssh: io.cloudslang.base.ssh
-  files: io.cloudslang.base.files
+
 
 flow:
   name: aviator_flow
@@ -13,12 +11,12 @@ flow:
     - password
     - tomcat_home
     - backup_location
-    - new_server_host # if needed
+    - new_server_host # Optional, use if the original server is unavailable
 
   workflow:
     - stopTomcatService:
         do:
-          ssh.ssh_command:
+          io.cloudslang.base.ssh.ssh_command:
             - host: ${host}
             - port: ${port}
             - username: ${username}
@@ -30,7 +28,7 @@ flow:
 
     - backupData:
         do:
-          files.copy:
+          io.cloudslang.base.files.copy:
             - source: ${tomcat_home} + '/webapps/myapp' # Path to your app's data
             - destination: ${backup_location}
         navigate:
@@ -39,8 +37,8 @@ flow:
 
     - restoreDataOnNewServer:
         do:
-          ssh.ssh_command:
-            - host: ${new_server_host} # Use new server if the original is down
+          io.cloudslang.base.ssh.ssh_command:
+            - host: ${new_server_host} # Use this if the original server is down
             - port: ${port}
             - username: ${username}
             - password: ${password}
@@ -51,13 +49,18 @@ flow:
 
     - startTomcatService:
         do:
-          ssh.ssh_command:
+          io.cloudslang.base.ssh.ssh_command:
             - host: ${new_server_host}
             - port: ${port}
             - username: ${username}
             - password: ${password}
             - command: ${tomcat_home} + '/bin/startup.sh'
+          navigate:
+          - SUCCESS: SUCCESS
+          - FAILURE: FAILURE
+    
 
   results:
     - SUCCESS
     - FAILURE
+
