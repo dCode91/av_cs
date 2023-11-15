@@ -29,7 +29,7 @@ flow:
 
     - backupData:
         do:
-          io.cloudslang.base.files.copy:
+          io.cloudslang.base.filesystem.copy:
             - source: "${tomcat_home + '/webapps/myapp'}" # Path to your app's data
             - destination: '${backup_location}'
         navigate:
