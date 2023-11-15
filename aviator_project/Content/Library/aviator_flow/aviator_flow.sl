@@ -15,9 +15,6 @@ flow:
     - new_server_host # Optional, use if the original server is unavailable
 
   workflow:
-    - detectDisaster:
-        # Implement logic to detect if Tomcat is down or not responding
-
     - stopTomcatService:
         do:
           io.cloudslang.base.ssh.ssh_command:
@@ -60,11 +57,8 @@ flow:
             - password: '${password}'
             - command: "${tomcat_home + '/bin/startup.sh'}"
         navigate:
-          - SUCCESS: validateRecovery
+          - SUCCESS: SUCCESS
           - FAILURE: FAILURE
-
-    - validateRecovery:
-        # Implement logic to validate if the application is up and running
 
   results:
     - SUCCESS
