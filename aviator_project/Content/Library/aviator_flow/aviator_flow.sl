@@ -1,4 +1,71 @@
 namespace: aviator_flow
+
+imports:
+  ssh: io.cloudslang.base.ssh
+  files: io.cloudslang.base.files
+
 flow:
   name: aviator_flow
-  results: []
+  inputs:
+    - host
+    - port
+    - username
+    - password
+    - tomcat_home
+    - backup_location
+    - new_server_host # if needed
+
+  workflow:
+    - detectDisaster:
+        # Add your logic to detect if Tomcat is down or not responding
+        # This could be an HTTP health check or similar
+
+    - stopTomcatService:
+        do:
+          ssh.ssh_command:
+            - host
+            - port
+            - username
+            - password
+            - command: tomcat_home + '/bin/shutdown.sh'
+        navigate:
+          - SUCCESS: backupData
+          - FAILURE: FAILURE
+
+    - backupData:
+        do:
+          files.copy:
+            - source: tomcat_home + '/webapps/myapp' # path to your app's data
+            - destination: backup_location
+        navigate:
+          - SUCCESS: restoreDataOnNewServer
+          - FAILURE: FAILURE
+
+    - restoreDataOnNewServer:
+        do:
+          ssh.ssh_command:
+            - host: new_server_host # Use new server if original is down
+            - port
+            - username
+            - password
+            - command: 'cp -R ' + backup_location + ' ' + tomcat_home + '/webapps/myapp'
+        navigate:
+          - SUCCESS: startTomcatService
+          - FAILURE: FAILURE
+
+    - startTomcatService:
+        do:
+          ssh.ssh_command:
+            - host: new_server_host
+            - port
+            - username
+            - password
+            - command: tomcat_home + '/bin/startup.sh'
+
+    - validateRecovery:
+        # Add logic to validate if the application is up and running
+
+  results:
+    - SUCCESS
+    - FAILURE
+
