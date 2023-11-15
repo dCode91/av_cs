@@ -16,10 +16,6 @@ flow:
     - new_server_host # if needed
 
   workflow:
-    - detectDisaster:
-        # Add your logic to detect if Tomcat is down or not responding
-        # This could be an HTTP health check or similar
-
     - stopTomcatService:
         do:
           ssh.ssh_command:
@@ -61,10 +57,9 @@ flow:
             - username
             - password
             - command: tomcat_home + '/bin/startup.sh'
-
-    - validateRecovery:
-        # Add logic to validate if the application is up and running
-
+        navigate:
+          - SUCCESS: SUCCESS
+          - FAILURE: FAILURE
   results:
     - SUCCESS
     - FAILURE
