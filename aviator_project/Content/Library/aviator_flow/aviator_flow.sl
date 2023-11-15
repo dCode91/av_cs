@@ -11,26 +11,26 @@ flow:
     - password
     - tomcat_home
     - backup_location
-    - new_server_host # Optional, use if the original server is unavailable
+    - new_server_host 
 
   workflow:
     - stopTomcatService:
         do:
           io.cloudslang.base.ssh.ssh_command:
-            - host: ${host}
-            - port: ${port}
-            - username: ${username}
-            - password: ${password}
-            - command: ${tomcat_home} + '/bin/shutdown.sh'
+            - host: '${host}'
+            - port: '${port}'
+            - username: '${username}'
+            - password: '${password}'
+            - command: "${tomcat_home + '/bin/shutdown.sh'}"
         navigate:
           - SUCCESS: backupData
           - FAILURE: FAILURE
 
     - backupData:
         do:
-          io.cloudslang.base.files.copy:
-            - source: ${tomcat_home} + '/webapps/myapp' # Path to your app's data
-            - destination: ${backup_location}
+          io.cloudslang.base.filesystem.copy:
+            - source: "${tomcat_home + '/webapps/myapp' # Path to your app's data}"
+            - destination: '${backup_location}'
         navigate:
           - SUCCESS: restoreDataOnNewServer
           - FAILURE: FAILURE
@@ -38,11 +38,11 @@ flow:
     - restoreDataOnNewServer:
         do:
           io.cloudslang.base.ssh.ssh_command:
-            - host: ${new_server_host} # Use this if the original server is down
-            - port: ${port}
-            - username: ${username}
-            - password: ${password}
-            - command: 'cp -R ' + ${backup_location} + ' ' + ${tomcat_home} + '/webapps/myapp'
+            - host: '${new_server_host}' # Use this if the original server is down
+            - port: '${port}'
+            - username: '${username}'
+            - password: '${password}'
+            - command: "${'cp -R ' + backup_location + ' ' + tomcat_home + '/webapps/myapp'}"
         navigate:
           - SUCCESS: startTomcatService
           - FAILURE: FAILURE
@@ -50,11 +50,11 @@ flow:
     - startTomcatService:
         do:
           io.cloudslang.base.ssh.ssh_command:
-            - host: ${new_server_host}
-            - port: ${port}
-            - username: ${username}
-            - password: ${password}
-            - command: ${tomcat_home} + '/bin/startup.sh'
+            - host: '${new_server_host}'
+            - port: '${port}'
+            - username: '${username}'
+            - password: '${password}'
+            - command: "${tomcat_home + '/bin/startup.sh'}"
           navigate:
           - SUCCESS: SUCCESS
           - FAILURE: FAILURE
