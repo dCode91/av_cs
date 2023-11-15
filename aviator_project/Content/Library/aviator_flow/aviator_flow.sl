@@ -6,14 +6,18 @@ flow:
   name: aviator_flow
   inputs:
     - host
-    - port
+    - port:
+        default: '22'
     - username
     - password
     - tomcat_home
     - backup_location
-    - new_server_host 
+    - new_server_host # Optional, use if the original server is unavailable
 
   workflow:
+    - detectDisaster:
+        # Implement logic to detect if Tomcat is down or not responding
+
     - stopTomcatService:
         do:
           io.cloudslang.base.ssh.ssh_command:
@@ -28,8 +32,8 @@ flow:
 
     - backupData:
         do:
-          io.cloudslang.base.filesystem.copy:
-            - source: "${tomcat_home + '/webapps/myapp' # Path to your app's data}"
+          io.cloudslang.base.files.copy:
+            - source: "${tomcat_home + '/webapps/myapp'}" # Path to your app's data
             - destination: '${backup_location}'
         navigate:
           - SUCCESS: restoreDataOnNewServer
@@ -55,12 +59,13 @@ flow:
             - username: '${username}'
             - password: '${password}'
             - command: "${tomcat_home + '/bin/startup.sh'}"
-          navigate:
-          - SUCCESS: SUCCESS
+        navigate:
+          - SUCCESS: validateRecovery
           - FAILURE: FAILURE
-    
+
+    - validateRecovery:
+        # Implement logic to validate if the application is up and running
 
   results:
     - SUCCESS
     - FAILURE
-
