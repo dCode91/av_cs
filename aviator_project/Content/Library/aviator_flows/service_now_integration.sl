@@ -1,44 +1,38 @@
-namespace: io.cloudslang.servicenow
-
-imports:
-  http: io.cloudslang.base.network.http
-
+namespace: aviator_flows
 flow:
-  name: get_servicenow_incident
-  inputs:
-    - instance_name: "your_instance" # Replace with your ServiceNow instance name
-    - username: "your_username"      # Replace with your ServiceNow username
-    - password: "your_password"      # Replace with your ServiceNow password
-    - incident_number:              # Replace with the incident number you want to fetch
-
+  name: service_now_integration
   workflow:
-    - get_incident:
+    - run_command:
         do:
-          http.get:
-            - url: "'https://' + instance_name + '.service-now.com/api/now/table/incident?sysparm_query=number=' + incident_number"
-            - auth_type: "basic"
-            - username: username
-            - password: password
-            - headers: "'Accept:application/json'"
-            - connect_timeout: 10000
-            - socket_timeout: 10000
-            - response_headers_name: "response_headers"
-            - status_code: 200
-
-        publish:
-          - result: "${get_incident[return_result]}"
-          - response_code: "${get_incident[status_code]}"
-          - response_headers: "${get_incident[response_headers]}"
-
+          io.cloudslang.base.cmd.run_command:
+            - command: restart tomcat
         navigate:
-          - SUCCESS: on_success
+          - SUCCESS: get_time
           - FAILURE: on_failure
-
+    - get_time:
+        do:
+          io.cloudslang.base.datetime.get_time: []
+        navigate:
+          - SUCCESS: SUCCESS
+          - FAILURE: on_failure
   results:
-    - SUCCESS
     - FAILURE
-
-  outputs:
-    - result
-    - response_code
-    - response_headers
+    - SUCCESS
+extensions:
+  graph:
+    steps:
+      run_command:
+        x: 160
+        'y': 200
+      get_time:
+        x: 440
+        'y': 200
+        navigate:
+          d60c4f4f-82df-cc16-2da4-17f41b653ae0:
+            targetId: c95f208b-7a5b-ce91-db89-c38fb6fe2860
+            port: SUCCESS
+    results:
+      SUCCESS:
+        c95f208b-7a5b-ce91-db89-c38fb6fe2860:
+          x: 680
+          'y': 280
